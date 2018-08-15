@@ -3,6 +3,7 @@ var chai = require('chai');
 var expect = chai.expect;
 var app = require('../../server.js');
 var jwt = require('jsonwebtoken');
+const sizeOf = require('image-size');
 
 var winston = require('winston');
 var config = require('../../config.js');
@@ -162,11 +163,15 @@ describe('POST /apply_json_patch', function () {
 });
 
 describe('GET /create_thumbmail', function () {
+	this.timeout(150000);
 	it('it responds with 401 status code if no authorization header', function (done) {
-		request(app).get('/api/create_thumbmail').expect(401).end(function (err, res) {
-			if (err) return done(err);
-			done();
-		});
+		request(app)
+			.get('/api/create_thumbmail')
+			.expect(401)
+			.end(function (err, res) {
+				if (err) return done(err);
+				done();
+			});
 	});
 
 	it('it responds with 200 status code if good authorization header', function (done) {
@@ -210,7 +215,7 @@ describe('GET /create_thumbmail', function () {
 				done();
 			});
 	});
-	it('it responds with 50x50 thumbmail if good authorization header and public_image_url points to an image', function (done) {
+	it('it responds with a thumbmail if good authorization header and public_image_url points to an image', function (done) {
 		var token = jwt.sign({
 			id: 1,
 		}, config.JWT_SECRET, {
@@ -222,11 +227,47 @@ describe('GET /create_thumbmail', function () {
 				public_image_url: "https://dummyimage.com/600x400/000/fff",
 			})
 			.set('Authorization', token)
-			.expect('Content-Type', /json/)
+			.expect('Content-Type', /image/)
 			.end(function (err, res) {
 				if (err) return done(err);
-				//console.log(res.body);
 				done();
+			});
+	});
+	it('it responds with 50x50 thumbmail if good authorization header and public_image_url points to an image', function (done) {
+		var token = jwt.sign({
+			id: 1,
+		}, config.JWT_SECRET, {
+			expiresIn: 60 * 60 * 24 * 365
+		});
+
+		function binaryParser(res, callback) {
+			res.setEncoding('binary');
+			res.data = '';
+			res.on('data', function (chunk) {
+				res.data += chunk;
+			});
+			res.on('end', function () {
+				callback(null, new Buffer(res.data, 'binary'));
+			});
+		}
+
+		request(app)
+			.get('/api/create_thumbmail')
+			.query({
+				public_image_url: "https://dummyimage.com/600x400/000/fff",
+			})
+			.set('Authorization', token)
+			.expect('Content-Type', /image/)
+			.buffer()
+			.parse(binaryParser)
+			.end(function (err, res) {
+				if (err) return done(err);
+				var dimensions = sizeOf(res.body);
+				if (dimensions.width === dimensions.height && dimensions.height == 50) {
+					done();
+				} else {
+					done("size not equal")
+				}
 			});
 	});
 });

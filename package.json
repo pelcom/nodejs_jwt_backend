@@ -6,16 +6,16 @@
 	"scripts": {
 		"start": "node index.js",
 		"test": "mocha --recursive"
-	}
+	},
 	"repository": {
 		"type": "git",
 		"url": "https://github.com/pelcom/nodejs_jwt_backend.git"
 	},
 	"keywords": [
-    "interview",
-    "node.js",
-    "hackerbay"
-  ],
+		"interview",
+		"node.js",
+		"hackerbay"
+	],
 	"author": "Olaawo Oluwapelumi Emmanuel",
 	"license": "ISC",
 	"dependencies": {
@@ -23,10 +23,13 @@
 		"chai": "^3.5.0",
 		"express": "^4.14.1",
 		"fast-json-patch": "^2.0.6",
+		"image-size": "^0.6.3",
+		"image-type": "^3.0.0",
 		"images-downloader": "^1.0.3",
-		"jsonwebtoken": "^7.3.0",
-		"mocha": "^3.2.0",
+		"jsonwebtoken": "^8.3.0",
+		"mocha": "^5.2.0",
 		"morgan": "^1.9.0",
+		"read-chunk": "^2.1.0",
 		"resize-img": "^1.1.2",
 		"sinon": "^1.17.7",
 		"supertest": "^3.0.0",

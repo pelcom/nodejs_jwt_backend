@@ -1,5 +1,6 @@
 module.exports = function (router) {
-
+	const readChunk = require('read-chunk'); // npm install read-chunk image-type image-size --save
+	const imageType = require('image-type');
 	var path = require('path');
 	var config = require('../config.js');
 	const fs = require('fs');
@@ -10,8 +11,6 @@ module.exports = function (router) {
 
 		var jsonPatch = req.body.json_patch;
 		var jsonObjectToPatch = req.body.json_object_to_patch;
-		console.log(jsonPatch);
-		console.log(typeof ['kljkjlk']);
 		if (!jsonPatch || (typeof jsonPatch != 'object') || !Array.isArray(jsonPatch)) {
 			res.status(200).json({
 				success: false,
@@ -33,24 +32,21 @@ module.exports = function (router) {
 
 	router.get('/create_thumbmail', function (req, res) {
 		var publicImageURL = req.query.public_image_url;
-		console.log("publicImageURL");
-		console.log(publicImageURL);
 		if (publicImageURL && typeof publicImageURL == 'string') {
 			//var publicImageURL = "https://dummyimage.com/600x400/000/fff";
 			var downloadsDirectory = path.normalize('./public/downloads/');
 			var downloadsDirectoryResized = path.normalize('./public/downloads/resized/');
-			console.log(downloadsDirectory);
 			const download = require('images-downloader').images;
 			download([publicImageURL], downloadsDirectory)
 				.then(result => {
 					if (result && result[0] && result[0].filename) {
 						//var justDownloadedile = path.normalize('./public/downloads/' + result[0].filename);
 						var justDownloadedile = result[0].filename;
-						console.log(justDownloadedile);
 						resizeImg(fs.readFileSync(justDownloadedile), {
 								width: 50,
 								height: 50
 							}).then(buf => {
+								var theImageType = imageType(buf);
 								/*
 									fs.writeFileSync(downloadsDirectoryResized + "res.png", buf);
 									res.json({
@@ -59,8 +55,14 @@ module.exports = function (router) {
 									});
 								res.send(new Buffer(buf, 'binary'))
 									*/
-								var ext = /^.+\.([^.]+)$/.exec(justDownloadedile);
-								var extVal = ext == null ? "" : "." + ext[1];
+								var extVal = "";
+								if (theImageType && theImageType.mime) {
+									res.header('Content-Type', theImageType.mime);
+									extVal = "." + theImageType.ext;
+								} else {
+									var ext = /^.+\.([^.]+)$/.exec(justDownloadedile);
+									extVal = ext == null ? "" : "." + ext[1];
+								}
 								res.header('Content-Disposition', 'attachment; filename="resixed50' + extVal + '"');
 								res.send(buf);
 							})
